@@ -3,7 +3,7 @@ const ORIGINAL = {
   game: 'https://udl-colleague-play.ababyabyaby.chatgpt.site',
   slot: 'https://udl-slot-machine.ababyabyaby.chatgpt.site'
 };
-const VERSION = 'udl-entry-2026-10-03-netlify-v1';
+const VERSION = 'udl-entry-2026-10-03-netlify-v2';
 const REQUEST_HEADERS = [
   'accept', 'accept-language', 'content-type', 'range',
   'cookie', 'user-agent', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site'
@@ -21,10 +21,11 @@ function message(text, status) {
 
 function entryConfig(url) {
   if (url.protocol !== 'https:') return null;
-  const match = url.hostname.match(/^udl-(game|slot)-as9irin\.netlify\.app$/);
-  if (!match) return null;
-  return {role: match[1], entries: {
-    game: 'https://udl-game-as9irin.netlify.app',
+  const role = url.hostname === 'playgameaby.netlify.app' ? 'game' :
+    url.hostname === 'udl-slot-as9irin.netlify.app' ? 'slot' : null;
+  if (!role) return null;
+  return {role, entries: {
+    game: 'https://playgameaby.netlify.app',
     slot: 'https://udl-slot-as9irin.netlify.app'
   }};
 }

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import edgeFunction from './netlify/edge-functions/entry.js';
 
-const GAME = 'https://udl-game-as9irin.netlify.app';
+const GAME = 'https://playgameaby.netlify.app';
 const SLOT = 'https://udl-slot-as9irin.netlify.app';
 const HUB = 'https://udl-colleague-play.ababyabyaby.chatgpt.site';
 const ORIGINAL_SLOT = 'https://udl-slot-machine.ababyabyaby.chatgpt.site';
@@ -29,7 +29,7 @@ test('入口仅转发固定游戏主机；文本链接及跳转使用同一账�
     assert.ok(!html.includes('.chatgpt.site'));
     assert.equal(response.headers.get('ETag'), null);
     assert.equal(response.headers.get('Cache-Control'), 'private, no-store');
-    assert.equal(response.headers.get('X-UDL-Entry'), 'udl-entry-2026-10-03-netlify-v1');
+    assert.equal(response.headers.get('X-UDL-Entry'), 'udl-entry-2026-10-03-netlify-v2');
   });
 });
 
@@ -177,10 +177,11 @@ test('JSON 转义网址和 CSP 同步替换，根目录资源路径保持不变'
 });
 
 test('无效部署名称、错误方法和原站网络失败均明确失败', async () => {
-  assert.equal((await edgeFunction(new Request('https://udl-game-as9irin--deploy-preview-123.netlify.app/login'))).status, 503);
+  assert.equal((await edgeFunction(new Request('https://playgameaby--deploy-preview-123.netlify.app/login'))).status, 503);
   assert.equal((await edgeFunction(new Request('https://udl-game-other.netlify.app/login'))).status, 503);
-  assert.equal((await edgeFunction(new Request('https://udl-game-as9irin.netlify.app.attacker.invalid/login'))).status, 503);
-  assert.equal((await edgeFunction(new Request('http://udl-game-as9irin.netlify.app/login'))).status, 503);
+  assert.equal((await edgeFunction(new Request('https://udl-game-as9irin.netlify.app/login'))).status, 503);
+  assert.equal((await edgeFunction(new Request('https://playgameaby.netlify.app.attacker.invalid/login'))).status, 503);
+  assert.equal((await edgeFunction(new Request('http://playgameaby.netlify.app/login'))).status, 503);
   assert.equal((await edgeFunction(new Request(GAME + '/login', {method: 'DELETE'}))).status, 405);
   await mockFetch(async () => { throw Error('synthetic network failure'); }, async () => {
     assert.equal((await edgeFunction(new Request(GAME + '/login'))).status, 502);

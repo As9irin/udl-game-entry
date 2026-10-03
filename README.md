@@ -2,14 +2,14 @@
 
 这份工程把现有 Cloudflare Worker 入口逻辑适配为 Netlify Edge Function。正式域名按项目约定固定为：
 
-- `https://udl-game-as9irin.netlify.app`
+- `https://playgameaby.netlify.app`
 - `https://udl-slot-as9irin.netlify.app`
 
-这两个地址只是预期部署域名；本工程尚未发布，在线代理和手机访问均未验证。
+主入口已部署，现按用户指定改名为 `playgameaby`。老虎机独立入口仍待部署；手机关闭 VPN 的登录、游玩和存档尚未实测。大陆节点检测必须针对当前正式域名重新进行，旧域名的检测结果不能直接作为新域名的证明。
 
 ## 部署结构
 
-Netlify 的默认 `*.netlify.app` 域名由项目名决定，因此需在 Netlify 中分别建立两个项目，项目名分别为 `udl-game-as9irin` 和 `udl-slot-as9irin`，然后将同一工程部署到两个项目。部署后入口只接受以上两个精确 HTTPS 主机名；Deploy Preview、分支预览和其他主机返回 503。若项目名被占用，目标正式域名无法按约定取得，需先解决命名冲突。
+Netlify 的默认 `*.netlify.app` 域名由项目名决定，因此需在 Netlify 中分别建立两个项目，项目名分别为 `playgameaby` 和 `udl-slot-as9irin`，然后将同一工程部署到两个项目。部署后入口只接受以上两个精确 HTTPS 主机名；Deploy Preview、分支预览和其他主机返回 503。若项目名被占用，目标正式域名无法按约定取得，需先解决命名冲突。
 
 工程目录可通过 Netlify 网页的 Git 部署连接。部署配置位于 `netlify.toml`，静态发布目录为 `public`，Edge Function 位于 `netlify/edge-functions/entry.js`，路由覆盖 `/*`。Netlify Edge Functions 默认不缓存；配置中没有启用缓存规则，代理响应同时带有 `Cache-Control: private, no-store`。
 
