@@ -1,33 +1,11 @@
-# UDL Netlify 游戏入口
+# UDL 游戏唯一主站
 
-这份工程把现有 Cloudflare Worker 入口逻辑适配为 Netlify Edge Function。正式域名按项目约定固定为：
+正式入口为 https://playgameaby.netlify.app。2048 使用 /2048，办公室说小话使用 /office，同事老虎机使用 /slot/。所有新游戏均部署在同一主站，不再建立独立游戏站点。
 
-- `https://playgameaby.netlify.app`
-- `https://udl-slot-as9irin.netlify.app`
+Netlify playgameaby 项目代理唯一主服务 udl-colleague-play.ababyabyaby.chatgpt.site。三款游戏共用主站登录 Cookie、同事名单、主站 D1 数据库和 R2 素材库。老虎机 /api/slot/* 接口、原生 WASM 引擎和存档在主站运行，不再请求旧老虎机服务。
 
-主入口已部署，现按用户指定改名为 `playgameaby`。老虎机独立入口仍待部署；手机关闭 VPN 的登录、游玩和存档尚未实测。大陆节点检测必须针对当前正式域名重新进行，旧域名的检测结果不能直接作为新域名的证明。
+后台从 /admin 进入，经跳转在原主站验证所有者身份。服务间迁移接口与媒体初始化路径不对外开放；客户端传入的身份头和 Authorization 不转发。保留来源校验、Cookie 安全属性和 private/no-store 缓存策略。
 
-## 部署结构
+旧老虎机 Netlify 地址仅过渡跳转至主站 /slot/，迁移验证后删除旧项目。游戏实际源代码和后续发布说明见主站源码中的 AGENTS.md。
 
-Netlify 的默认 `*.netlify.app` 域名由项目名决定，因此需在 Netlify 中分别建立两个项目，项目名分别为 `playgameaby` 和 `udl-slot-as9irin`，然后将同一工程部署到两个项目。部署后入口只接受以上两个精确 HTTPS 主机名；Deploy Preview、分支预览和其他主机返回 503。若项目名被占用，目标正式域名无法按约定取得，需先解决命名冲突。
-
-工程目录可通过 Netlify 网页的 Git 部署连接。部署配置位于 `netlify.toml`，静态发布目录为 `public`，Edge Function 位于 `netlify/edge-functions/entry.js`，路由覆盖 `/*`。Netlify Edge Functions 默认不缓存；配置中没有启用缓存规则，代理响应同时带有 `Cache-Control: private, no-store`。
-
-## 代理行为与隐私边界
-
-代理只使用原 Worker 中固定的两个上游。它保留 GET、HEAD、POST、会话 Cookie 和私有头像访问所需的会话语义，POST 保留来源校验；共享名单与媒体种子接口仍被拒绝，管理入口仍返回原站。没有添加数据库、名单、头像素材、凭证或主动 `console` 日志。
-
-部署只转发用户原本已获准访问的原游戏内容。它不改变原游戏登录权限、共享名单或存档存储；这里的代理适配也不能证明目标手机网络能够访问新域名。Netlify 平台自身可能记录运行追踪，代码不输出 Cookie 或请求正文。
-
-## 本地检查
-
-```sh
-npm test
-```
-
-## 官方配置依据
-
-- [Netlify Edge Functions handler API](https://docs.netlify.com/build/edge-functions/api/)
-- [Netlify Edge Functions declarations and paths](https://docs.netlify.com/build/edge-functions/declarations/)
-- [Netlify Edge Functions response caching](https://docs.netlify.com/build/edge-functions/optional-configuration/)
-- [Deno Fetch Headers API: getSetCookie](https://docs.deno.com/api/web/fetch/)
+本地检查：node --test worker.test.mjs。国内可达性需针对正式主站实测；节点 HTTP 检测不能代替手机实际登录、游玩与存档测试。

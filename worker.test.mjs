@@ -18,18 +18,18 @@ test('入口仅转发固定游戏主机；文本链接及跳转使用同一账�
     assert.equal(new URL(url).origin, HUB);
     assert.equal(init.redirect, 'manual');
     assert.equal(init.cache, 'no-store');
-    return new Response(`<a href="${ORIGINAL_SLOT}/auth/start">老虎机</a><script>const hub=${JSON.stringify(HUB)};</script>`, {
+    return new Response(`<a href="${HUB}/slot/">老虎机</a><script>const hub=${JSON.stringify(HUB)};</script>`, {
       headers: {'Content-Type': 'text/html; charset=utf-8', 'ETag': 'old'}
     });
   }, async () => {
     const response = await edgeFunction(new Request(GAME + '//unrelated.example/?url=https://unrelated.example'));
     const html = await response.text();
-    assert.ok(html.includes(SLOT + '/auth/start'));
+    assert.ok(html.includes(GAME + '/slot/'));
     assert.ok(html.includes(GAME));
     assert.ok(!html.includes('.chatgpt.site'));
     assert.equal(response.headers.get('ETag'), null);
     assert.equal(response.headers.get('Cache-Control'), 'private, no-store');
-    assert.equal(response.headers.get('X-UDL-Entry'), 'udl-entry-2026-10-03-netlify-v2');
+    assert.equal(response.headers.get('X-UDL-Entry'), 'udl-entry-2026-10-03-single-main-v3');
   });
 });
 
@@ -84,39 +84,12 @@ test('外站请求及缺失来源的 POST 在触及原游戏前被拒绝', async
   });
 });
 
-test('老虎机开始、主站票据、老虎机回调保持独立主机并保留原参数', async () => {
-  await mockFetch(async (url, init) => {
-    const target = new URL(url);
-    assert.equal(init.redirect, 'manual');
-    const headers = new Headers();
-    if (target.origin === ORIGINAL_SLOT && target.pathname === '/auth/start') {
-      headers.set('Location', HUB + '/games/slot?state=synthetic-state');
-      headers.append('Set-Cookie', 'slot_login_state=synthetic-only; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=120');
-    } else if (target.origin === HUB && target.pathname === '/games/slot') {
-      assert.equal(target.searchParams.get('state'), 'synthetic-state');
-      headers.set('Location', ORIGINAL_SLOT + '/auth/callback?state=synthetic-state&code=synthetic-code');
-    } else {
-      assert.equal(target.origin, ORIGINAL_SLOT);
-      assert.equal(target.pathname, '/auth/callback');
-      assert.equal(target.searchParams.get('state'), 'synthetic-state');
-      assert.equal(target.searchParams.get('code'), 'synthetic-code');
-      assert.equal(init.headers.get('Cookie'), 'slot_login_state=synthetic-only');
-      headers.set('Location', '/');
-      headers.append('Set-Cookie', 'slot_session=synthetic-only; Path=/; HttpOnly; Secure; SameSite=Lax');
-    }
-    return new Response(null, {status: 302, headers});
-  }, async () => {
-    const start = await edgeFunction(new Request(SLOT + '/auth/start'));
-    assert.equal(start.status, 302);
-    assert.equal(start.headers.get('Location'), GAME + '/games/slot?state=synthetic-state');
-    assert.equal(start.headers.getSetCookie().length, 1);
-    const ticket = await edgeFunction(new Request(start.headers.get('Location')));
-    assert.equal(ticket.headers.get('Location'), SLOT + '/auth/callback?state=synthetic-state&code=synthetic-code');
-    const callback = await edgeFunction(new Request(ticket.headers.get('Location'), {
-      headers: {Cookie: 'slot_login_state=synthetic-only'}
-    }));
-    assert.equal(callback.headers.get('Location'), '/');
-    assert.ok(callback.headers.getSetCookie()[0].includes('slot_session='));
+test('三个游戏使用同一主服务；旧老虎机入口只跳转，不转发请求',async()=>{
+  let count=0;
+  await mockFetch(async(url)=>{count++;assert.equal(new URL(url).origin,HUB);return new Response('ok');},async()=>{
+    for(const path of ['/2048','/office','/slot/','/api/slot/state'])assert.equal((await edgeFunction(new Request(GAME+path))).status,200);
+    const before=count,r=await edgeFunction(new Request(SLOT+'/auth/start'));
+    assert.equal(r.status,302);assert.equal(r.headers.get('Location'),GAME+'/slot/');assert.equal(count,before);
   });
 });
 
@@ -172,7 +145,7 @@ test('JSON 转义网址和 CSP 同步替换，根目录资源路径保持不变'
     assert.equal(body.path, '/api/me');
     assert.equal(result.headers.get('Content-Length'), null);
     assert.equal(result.headers.get('Content-Encoding'), null);
-    assert.equal(result.headers.get('Content-Security-Policy'), `default-src 'self'; connect-src ${GAME} ${SLOT}`);
+    assert.equal(result.headers.get('Content-Security-Policy'), `default-src 'self'; connect-src ${GAME} ${GAME}`);
   });
 });
 

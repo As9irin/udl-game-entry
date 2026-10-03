@@ -1,9 +1,8 @@
 // UDL 游戏反向代理逻辑，由 Netlify Edge Function wrapper 调用。
 const ORIGINAL = {
-  game: 'https://udl-colleague-play.ababyabyaby.chatgpt.site',
-  slot: 'https://udl-slot-machine.ababyabyaby.chatgpt.site'
+  game: 'https://udl-colleague-play.ababyabyaby.chatgpt.site'
 };
-const VERSION = 'udl-entry-2026-10-03-netlify-v2';
+const VERSION = 'udl-entry-2026-10-03-single-main-v3';
 const REQUEST_HEADERS = [
   'accept', 'accept-language', 'content-type', 'range',
   'cookie', 'user-agent', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site'
@@ -21,24 +20,20 @@ function message(text, status) {
 
 function entryConfig(url) {
   if (url.protocol !== 'https:') return null;
-  const role = url.hostname === 'playgameaby.netlify.app' ? 'game' :
-    url.hostname === 'udl-slot-as9irin.netlify.app' ? 'slot' : null;
-  if (!role) return null;
-  return {role, entries: {
-    game: 'https://playgameaby.netlify.app',
-    slot: 'https://udl-slot-as9irin.netlify.app'
-  }};
+  if(url.hostname==='udl-slot-as9irin.netlify.app')return {retired:true};
+  if(url.hostname!=='playgameaby.netlify.app')return null;
+  return {role:'game',entries:{game:'https://playgameaby.netlify.app'}};
 }
 
 function rewriteOwnedOrigins(text, entries) {
-  for (const role of ['game', 'slot']) {
+  for (const role of ['game']) {
     const old = ORIGINAL[role], next = entries[role];
     text = text.split(old).join(next);
     // JSON 中的转义斜杠，以及 HTML/CSS 中省略协议的完整网址。
     text = text.split(old.replaceAll('/', '\\/')).join(next.replaceAll('/', '\\/'));
     text = text.split(old.slice(6)).join(next.slice(6));
   }
-  return text;
+  return text.split('https://udl-slot-machine.ababyabyaby.chatgpt.site').join(entries.game);
 }
 
 function cookies(headers) {
@@ -50,6 +45,7 @@ function cookies(headers) {
 export async function handle(request) {
     const url = new URL(request.url), config = entryConfig(url);
     if (!config) return message('请访问正式的 Netlify 游戏入口域名。', 503);
+    if(config.retired)return new Response(null,{status:request.method==='POST'?409:302,headers:{Location:'https://playgameaby.netlify.app/slot/','Cache-Control':'private, no-store','X-UDL-Entry':VERSION}});
     if (!['GET', 'HEAD', 'POST'].includes(request.method)) return message('此入口不支持该请求。', 405);
     const upstream = new URL(ORIGINAL[config.role]);
     // 逐项赋值，任何输入路径或查询参数都不能替换固定的上游主机。
